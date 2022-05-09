@@ -196,12 +196,44 @@ def read_inputs():
 
 
     # Data Preprocessing
-    # ======================= Clinical Data =====================================
+    # ======================= Outcome Data =====================================
     for i in range(len(Outcome_Data)):
         for j in range(len(Outcome_Data[i])):
-            if Outcome_Data[i][j] == '' or Outcome_Data[i][j] == ' ':
-                Outcome_Data[i][j] = 0
+            if i == 0:
+                if Outcome_Data[i][j] == '' or Outcome_Data[i][j] == ' ':
+                    Outcome_Data[i][j] = 0
+                else:
+                    Outcome_Data[i][j] = float(Outcome_Data[i][j])
             else:
-                Outcome_Data[i][j] = 1
+                if Outcome_Data[i][j] == '' or Outcome_Data[i][j] == ' ':
+                    Outcome_Data[i][j] = 0
+                else:
+                    Outcome_Data[i][j] = 1
 
     return Clinic_Data, Outcome_Data, CT_Data
+
+
+
+
+
+def kFoldCV(k, X, y, model):
+    len_x = X.shape[0]
+    ind_step = int(len_x  / k)
+    ind = np.array([i * ind_step for i in range(k)])
+    accuracy = np.zeros(k)
+    precision = np.zeros(k)
+    recall = np.zeros(k)
+    # first k - 1 fold
+    for i in range(k - 1):
+        X_train_k = np.vstack((X[:ind[i],:],X[ind[i+1]:,:]))
+        X_test_k = X[ind[i]:ind[i + 1]]
+        y_train_k = np.hstack((y[:ind[i]],y[ind[i+1]:]))
+        y_test_k = y[ind[i]:ind[i + 1]]
+        _, accuracy[i],precision[i],recall[i] = model.evaluate(X_test_k, y_test_k)       
+    # last fold
+    X_train_k = X[:ind[k - 1],:]
+    y_train_k = y[:ind[k - 1]]
+    X_test_k = X[ind[k - 1]:,:]
+    y_test_k = y[ind[k - 1]:]
+    _, accuracy[k - 1],precision[k - 1],recall[k - 1] = model.evaluate(X_test_k, y_test_k)
+    return accuracy,precision,recall
